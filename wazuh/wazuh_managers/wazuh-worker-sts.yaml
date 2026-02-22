@@ -111,12 +111,12 @@ spec:
               name: agents-events
             - containerPort: 1516
               name: cluster
-          #startupProbe:
-          #  tcpSocket:
-          #    port: 1514
-          #  initialDelaySeconds: 15
-          #  periodSeconds: 10
-          #  failureThreshold: 12
+          startupProbe:
+            tcpSocket:
+              port: 1514
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 12
           readinessProbe:
             tcpSocket:
               port: 1514
