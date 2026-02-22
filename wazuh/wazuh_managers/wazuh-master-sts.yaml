@@ -115,7 +115,7 @@ spec:
               port: 55000
             initialDelaySeconds: 15
             periodSeconds: 10
-            failureThreshold: 12
+            failureThreshold: 30
           readinessProbe:
             tcpSocket:
               port: 55000

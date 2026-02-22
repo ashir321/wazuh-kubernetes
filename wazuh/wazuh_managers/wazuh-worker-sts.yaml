@@ -116,7 +116,7 @@ spec:
               port: 1514
             initialDelaySeconds: 15
             periodSeconds: 10
-            failureThreshold: 12
+            failureThreshold: 30
           readinessProbe:
             tcpSocket:
               port: 1514
