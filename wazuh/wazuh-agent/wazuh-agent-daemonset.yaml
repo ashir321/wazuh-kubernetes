@@ -21,16 +21,19 @@ spec:
         - name: wazuh-agent
           image: wazuh/wazuh-agent:4.14.3
           env:
-            - name: WAZUH_MANAGER
+            - name: WAZUH_MANAGER_SERVER
               value: "wazuh-workers.wazuh.svc.cluster.local"
             - name: WAZUH_MANAGER_PORT
               value: "1514"
-            - name: WAZUH_PROTOCOL
-              value: "tcp"
             - name: WAZUH_REGISTRATION_SERVER
               value: "wazuh.wazuh.svc.cluster.local"
             - name: WAZUH_REGISTRATION_PORT
               value: "1515"
+            - name: WAZUH_REGISTRATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-authd-pass
+                  key: authd.pass
             - name: WAZUH_AGENT_NAME
               valueFrom:
                 fieldRef:
