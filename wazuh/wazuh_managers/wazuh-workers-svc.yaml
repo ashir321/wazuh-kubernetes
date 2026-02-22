@@ -15,11 +15,14 @@ metadata:
   labels:
     app: wazuh-manager
     # dns: route53
-  annotations:
+  #annotations:
     # domainName: 'wazuh-manager.some-domain.com'  # TODO: Change this for a Hosted Zone you configured in AWS Route 53
-    service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    #service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
 spec:
   type: LoadBalancer
+  #type: NodePort
+  externalIPs:
+    - 192.168.1.23
   selector:
     app: wazuh-manager
     node-type: worker
