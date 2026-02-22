@@ -111,6 +111,24 @@ spec:
               name: agents-events
             - containerPort: 1516
               name: cluster
+          startupProbe:
+            tcpSocket:
+              port: 1514
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 12
+          readinessProbe:
+            tcpSocket:
+              port: 1514
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 1514
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
           env:
             - name: INDEXER_URL
               value: 'https://indexer:9200'
