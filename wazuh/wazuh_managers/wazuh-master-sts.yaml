@@ -110,12 +110,12 @@ spec:
               name: cluster
             - containerPort: 55000
               name: api
-          startupProbe:
-            tcpSocket:
-              port: 55000
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            failureThreshold: 12
+          #startupProbe:
+          #  tcpSocket:
+          #    port: 55000
+          #  initialDelaySeconds: 15
+          #  periodSeconds: 10
+          #  failureThreshold: 12
           readinessProbe:
             tcpSocket:
               port: 55000
