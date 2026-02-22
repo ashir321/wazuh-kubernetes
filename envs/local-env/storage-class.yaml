@@ -13,10 +13,17 @@ metadata:
   name: wazuh-storage
 
 # Microk8s is our standard for local development
-provisioner: microk8s.io/hostpath
+# provisioner: microk8s.io/hostpath
+
+# If you're using a different provider, you can list storage classes
+# with: "kubectl get sc" and look for the column "Provisioner"
+# with longhorn
+parameters:
+  numberOfReplicas: "1"
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+
 
 # In case you're running Minikube you can comment the line above and use this one
 # provisioner: k8s.io/minikube-hostpath
-
-# If you're using a different provider you can list storage classes
-# with: "kubectl get sc" and look for the column "Provisioner"
