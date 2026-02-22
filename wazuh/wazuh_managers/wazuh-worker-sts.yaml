@@ -52,7 +52,7 @@ spec:
           resources:
             limits:
               cpu: 400m
-              memory: 512Mi
+              memory: 2Gi
           securityContext:
             capabilities:
               add: ["SYS_CHROOT"]
@@ -165,4 +165,4 @@ spec:
         storageClassName: wazuh-storage
         resources:
           requests:
-            storage: 500Mi
+            storage: 10Gi
