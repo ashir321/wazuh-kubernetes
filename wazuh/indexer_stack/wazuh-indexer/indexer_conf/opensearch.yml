@@ -27,5 +27,15 @@ plugins.security.restapi.roles_enabled:
 - "all_access"
 - "security_rest_api_access"
 plugins.security.allow_default_init_securityindex: true
+
+# Compliance salt for field masking (must be a random 16-char string, identical on all nodes)
+plugins.security.compliance.salt: 15e0ab9171d5ed1e
+
+# Audit log configuration
+plugins.security.audit.type: internal_opensearch
+
+# SQL datasource encryption master key
+plugins.query.datasources.encryption.masterkey: 2b9973a42188de6b9a1dd3e89a09dc02
+
 cluster.routing.allocation.disk.threshold_enabled: false
 compatibility.override_main_response_version: true
