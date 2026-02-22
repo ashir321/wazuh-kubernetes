@@ -21,8 +21,17 @@ spec:
         - name: wazuh-agent
           image: wazuh/wazuh-agent:4.14.3
           env:
+            env:
             - name: WAZUH_MANAGER
-              value: "wazuh-manager-master-0:55000"   # from Step 5
+              value: " wazuh-manager-master-0.wazuh-cluster.wazuh.svc.cluster.local"
+            - name: WAZUH_MANAGER_PORT
+              value: "1514"
+            - name: WAZUH_PROTOCOL
+              value: "tcp"
+            - name: WAZUH_REGISTRATION_SERVER
+              value: " wazuh-manager-master-0.wazuh-cluster.wazuh.svc.cluster.local"
+            - name: WAZUH_REGISTRATION_PORT
+              value: "1515"
             - name: WAZUH_AGENT_NAME
               valueFrom:
                 fieldRef:
