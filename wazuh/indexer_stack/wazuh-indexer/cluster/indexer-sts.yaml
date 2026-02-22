@@ -77,7 +77,7 @@ spec:
               memory: 1564Mi
           env:
             - name: OPENSEARCH_JAVA_OPTS
-              value: '-Xms1g -Xmx1g -Dlog4j2.formatMsgNoLookups=true'
+              value: '-Xms1g -Xmx1g -Dlog4j2.formatMsgNoLookups=true --enable-native-access=ALL-UNNAMED'
             - name: CLUSTER_NAME
               value: wazuh
             - name: NETWORK_HOST
