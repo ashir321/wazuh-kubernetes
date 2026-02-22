@@ -55,6 +55,13 @@ spec:
               mountPath: /var/lib/wazuh-indexer
         - name: increase-the-vm-max-map-count
           image: busybox
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           command:
             - sysctl
             - -w
@@ -131,7 +138,7 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: wazuh-indexer
-        namespace: indexer-cluster
+        namespace: wazuh
       spec:
         accessModes:
           - ReadWriteOnce
