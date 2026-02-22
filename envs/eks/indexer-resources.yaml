@@ -25,7 +25,7 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: wazuh-indexer
-        namespace: indexer-cluster
+        namespace: wazuh
       spec:
         accessModes:
           - ReadWriteOnce

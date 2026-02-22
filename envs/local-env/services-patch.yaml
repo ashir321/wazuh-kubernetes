@@ -1,0 +1,41 @@
+# Copyright (C) 2019, Wazuh Inc.
+#
+# This program is a free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public
+# License (version 2) as published by the FSF - Free Software
+# Foundation.
+
+# Patch services to use NodePort for local/native Kubernetes clusters
+# that don't have a LoadBalancer controller (e.g. MetalLB)
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh
+  namespace: wazuh
+spec:
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-workers
+  namespace: wazuh
+spec:
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: indexer
+  namespace: wazuh
+spec:
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+  namespace: wazuh
+spec:
+  type: NodePort
