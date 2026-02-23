@@ -14,6 +14,7 @@ spec:
     spec:
       hostPID: true
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 30
       tolerations:
         - effect: NoSchedule
