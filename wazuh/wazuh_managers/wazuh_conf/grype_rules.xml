@@ -1,0 +1,53 @@
+<!--
+  Wazuh custom rules for Grype container image vulnerability scanner.
+  Detects and classifies vulnerabilities by severity level.
+-->
+<group name="grype">
+  <!-- Parent Rule for Grype alerts -->
+  <rule id="100101" level="0">
+    <decoded_as>grype-decoder</decoded_as>
+    <description>Grype alert detected.</description>
+  </rule>
+
+  <!-- This rule detects a critical severity vulnerability in a container image -->
+  <rule id="100102" level="14">
+    <if_sid>100101</if_sid>
+    <field name="severity">Critical</field>
+    <description>Grype alert [Critical]: Vulnerability '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a high severity vulnerability in a container image -->
+  <rule id="100103" level="12">
+    <if_sid>100101</if_sid>
+    <field name="severity">High</field>
+    <description>Grype alert [High]: Vulnerability '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a medium severity vulnerability in a container image -->
+  <rule id="100104" level="7">
+    <if_sid>100101</if_sid>
+    <field name="severity">Medium</field>
+    <description>Grype alert [Medium]: Vulnerability '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a low severity vulnerability in a container image -->
+  <rule id="100105" level="4">
+    <if_sid>100101</if_sid>
+    <field name="severity">Low</field>
+    <description>Grype alert [Low]: Vulnerability '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a negligible severity vulnerability in a container image -->
+  <rule id="100106" level="1">
+    <if_sid>100101</if_sid>
+    <field name="severity">Negligible</field>
+    <description>Grype alert [Negligible]: Vulnerability '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects an unknown severity vulnerability in a container image -->
+  <rule id="100107" level="7">
+    <if_sid>100101</if_sid>
+    <field name="severity">Unknown</field>
+    <description>Grype alert [Unknown]: Vulnerability '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+</group>

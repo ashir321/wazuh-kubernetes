@@ -44,8 +44,28 @@ spec:
         - name: filebeat-certs
           secret:
             secretName: indexer-certs
+        - name: grype-manager-config
+          configMap:
+            name: grype-manager-config
       securityContext:
         fsGroup: 101
+      initContainers:
+        - name: grype-config-setup
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /var/ossec/etc/decoders /var/ossec/etc/rules
+              cp /grype-config/grype_decoders.xml /var/ossec/etc/decoders/grype_decoders.xml
+              cp /grype-config/grype_rules.xml /var/ossec/etc/rules/grype_rules.xml
+          volumeMounts:
+            - name: grype-manager-config
+              mountPath: /grype-config
+              readOnly: true
+            - name: wazuh-manager-worker
+              mountPath: /var/ossec/etc
+              subPath: wazuh/var/ossec/etc
       containers:
         - name: wazuh-manager
           image: 'wazuh/wazuh-manager:4.14.3'
