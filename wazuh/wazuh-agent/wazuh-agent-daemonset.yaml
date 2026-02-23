@@ -131,7 +131,52 @@ spec:
             - name: host-containerd-sock
               mountPath: /run/containerd/containerd.sock
               readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: etc
+              mountPath: /host/etc
+              readOnly: true
+            - name: dev
+              mountPath: /host/dev
+              readOnly: true
+            - name: boot
+              mountPath: /host/boot
+              readOnly: true
+            - name: usr
+              mountPath: /host/usr
+              readOnly: true
+            - name: run
+              mountPath: /host/run
+              readOnly: true
+            - name: rootfs
+              mountPath: /rootfs
+              readOnly: true
       volumes:
+        - name: rootfs
+          hostPath:
+            path: /
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: etc
+          hostPath:
+            path: /etc
+        - name: dev
+          hostPath:
+            path: /dev
+        - name: boot
+          hostPath:
+            path: /boot
+        - name: usr
+          hostPath:
+            path: /usr
+        - name: run
+          hostPath:
+            path: /run
         - name: host-var-log
           hostPath:
             path: /var/log
