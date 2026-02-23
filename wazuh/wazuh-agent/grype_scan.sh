@@ -7,6 +7,12 @@ GRYPE_BIN=$(command -v grype 2>/dev/null || echo "/usr/local/bin/grype")
 TEMPLATE_DIR="/tmp"
 TEMPLATE_FILE="$TEMPLATE_DIR/grype-custom.tmpl"
 
+# Verify Grype is installed and executable
+if [ ! -x "$GRYPE_BIN" ]; then
+  echo "Grype: ERROR - Grype binary not found at $GRYPE_BIN"
+  exit 1
+fi
+
 # Update Grype vulnerability database before scanning
 "$GRYPE_BIN" db update 2>/dev/null
 
