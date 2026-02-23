@@ -41,6 +41,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: CONTAINER_RUNTIME_ENDPOINT
+              value: "unix:///run/containerd/containerd.sock"
           securityContext:
             privileged: true
           lifecycle:
@@ -52,6 +54,17 @@ spec:
                   - |
                     # Install Grype vulnerability scanner
                     curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+                    # Install crictl for container image detection via CRI socket
+                    CRICTL_VERSION="v1.29.0"
+                    ARCH=$(uname -m)
+                    case "$ARCH" in
+                      x86_64)  CRICTL_ARCH="amd64" ;;
+                      aarch64) CRICTL_ARCH="arm64" ;;
+                      *)       CRICTL_ARCH="amd64" ;;
+                    esac
+                    curl -sSfL "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${CRICTL_ARCH}.tar.gz" \
+                      | tar -C /usr/local/bin -xzf - 2>/dev/null || true
 
                     # Copy the Grype scan script from the ConfigMap
                     mkdir -p /var/ossec/custom-script
