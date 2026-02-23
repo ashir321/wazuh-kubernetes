@@ -39,3 +39,5 @@ metadata:
   namespace: wazuh
 spec:
   type: NodePort
+  externalIPs:
+    - 192.168.1.23
