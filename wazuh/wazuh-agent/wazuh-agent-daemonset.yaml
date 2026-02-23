@@ -14,6 +14,7 @@ spec:
     spec:
       hostPID: true
       hostNetwork: true
+      terminationGracePeriodSeconds: 30
       tolerations:
         - effect: NoSchedule
           operator: Exists
@@ -40,6 +41,37 @@ spec:
                   fieldPath: spec.nodeName
           securityContext:
             privileged: true
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    # Gracefully stop the Wazuh agent so it deregisters active responses
+                    /var/ossec/bin/wazuh-control stop 2>/dev/null || true
+
+                    # Flush any iptables rules added by Wazuh active response
+                    # Save current rules, remove wazuh-related entries, restore clean rules
+                    if command -v iptables-save &>/dev/null; then
+                      iptables-save | grep -iv "wazuh\|ossec" | iptables-restore 2>/dev/null || true
+                      ip6tables-save | grep -iv "wazuh\|ossec" | ip6tables-restore 2>/dev/null || true
+                    fi
+
+                    # Remove any DROP rules that the active response firewall-drop may have added
+                    # These rules block IPs and persist on the host after pod deletion
+                    iptables -S INPUT 2>/dev/null | grep -i "DROP" | grep -iv "\-\-comment" | while read -r rule; do
+                      iptables $(echo "$rule" | sed 's/^-A/-D/') 2>/dev/null || true
+                    done
+                    iptables -S FORWARD 2>/dev/null | grep -i "DROP" | grep -iv "\-\-comment" | while read -r rule; do
+                      iptables $(echo "$rule" | sed 's/^-A/-D/') 2>/dev/null || true
+                    done
+
+                    # Clean up any custom chains created by Wazuh
+                    for chain in $(iptables -L -n 2>/dev/null | grep "^Chain" | awk '{print $2}' | grep -i "wazuh\|ossec"); do
+                      iptables -F "$chain" 2>/dev/null || true
+                      iptables -X "$chain" 2>/dev/null || true
+                    done
           volumeMounts:
             - name: host-var-log
               mountPath: /var/log
