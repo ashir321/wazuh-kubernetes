@@ -41,6 +41,13 @@ configMapGenerator:
   - name: dashboard-conf
     files:
       - indexer_stack/wazuh-dashboard/dashboard_conf/opensearch_dashboards.yml
+  - name: grype-manager-config
+    files:
+      - wazuh_managers/wazuh_conf/grype_decoders.xml
+      - wazuh_managers/wazuh_conf/grype_rules.xml
+  - name: grype-agent-config
+    files:
+      - wazuh-agent/grype_scan.sh
 
 resources:
   - base/wazuh-ns.yaml

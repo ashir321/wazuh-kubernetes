@@ -1,0 +1,13 @@
+<!--
+  Wazuh custom decoder for Grype container image vulnerability scanner.
+  Parses log output from the grype_scan.sh script running on Wazuh agents.
+-->
+<decoder name="grype-decoder">
+  <prematch>^Grype:</prematch>
+</decoder>
+
+<decoder name="grype-decoder-fields">
+  <parent>grype-decoder</parent>
+  <regex offset="after_parent">"(\.+)","(\.+)","(\.+)","(\.+)","(\.+)"</regex>
+  <order>image, package, version, vulnerability_id, severity</order>
+</decoder>
