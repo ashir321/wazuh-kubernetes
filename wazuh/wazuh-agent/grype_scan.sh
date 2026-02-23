@@ -1,11 +1,14 @@
 #!/bin/bash
 # Copyright (C) 2015-2023, Wazuh Inc.
 # Grype container image vulnerability scanner for Kubernetes environments.
-# Adapted for Kubernetes nodes - supports Docker and containerd runtimes.
+# Adapted for Kubernetes nodes - supports Docker, containerd, and CRI-O runtimes.
 
-GRYPE_BIN="/var/ossec/custom-script/grype"
+GRYPE_BIN=$(command -v grype 2>/dev/null || echo "/usr/local/bin/grype")
 TEMPLATE_DIR="/tmp"
 TEMPLATE_FILE="$TEMPLATE_DIR/grype-custom.tmpl"
+
+# Update Grype vulnerability database before scanning
+"$GRYPE_BIN" db update 2>/dev/null
 
 # Create the custom output template for Grype
 cat <<'EOL' > "$TEMPLATE_FILE"
@@ -15,28 +18,29 @@ cat <<'EOL' > "$TEMPLATE_FILE"
 {{- end }}
 EOL
 
-# Detect container images based on available runtime
+# ── Strategy 1: Detect container images via crictl (containerd/CRI-O) ──
 images=""
 
-if [ -S /var/run/docker.sock ] && command -v docker &>/dev/null; then
-  # Docker runtime
-  images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>")
-elif [ -S /var/run/docker.sock ]; then
-  # Docker socket exists but no docker CLI - try the host binary
-  if [ -x /host/usr/bin/docker ]; then
-    images=$(nsenter --target 1 --mount --uts --ipc --net -- docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>")
-  fi
-elif command -v crictl &>/dev/null; then
-  # Containerd/CRI-O runtime with crictl
+if command -v crictl &>/dev/null; then
   images=$(crictl images -o json 2>/dev/null | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 for img in data.get('images', []):
     for tag in img.get('repoTags', []):
-        print(tag)
+        if '<none>' not in tag:
+            print(tag)
 " 2>/dev/null)
+
+# ── Strategy 2: Docker runtime (socket + CLI available) ──
+elif [ -S /var/run/docker.sock ] && command -v docker &>/dev/null; then
+  images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>")
+
+# ── Strategy 3: Docker socket exists but no CLI - try host binary via nsenter ──
+elif [ -S /var/run/docker.sock ] && [ -x /host/usr/bin/docker ]; then
+  images=$(nsenter --target 1 --mount --uts --ipc --net -- docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>")
+
+# ── Strategy 4: Fallback - nsenter to access host's container runtime ──
 else
-  # Fallback: try nsenter to access host's container runtime
   images=$(nsenter --target 1 --mount --uts --ipc --net -- sh -c '
     if command -v docker &>/dev/null; then
       docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>"
@@ -45,6 +49,11 @@ else
     fi
   ' 2>/dev/null)
 fi
+
+# ── Strategy 5 (optional): Append ECR registry images for EKS environments ──
+# Uncomment and set ECR_IMAGES to scan images directly from an ECR registry:
+# ECR_IMAGES="123456789.dkr.ecr.ap-south-1.amazonaws.com/your-app:latest"
+# images="$images $ECR_IMAGES"
 
 if [ -z "$images" ]; then
   echo "Grype: No container images found or unable to access container runtime"
@@ -57,9 +66,11 @@ for image in $images; do
   grype_output=$("$GRYPE_BIN" "$image" -o template -t "$TEMPLATE_FILE" 2>/dev/null)
 
   while IFS= read -r line; do
-    # Prepend image name with quotes and comma
-    formatted_line=Grype:"\"$image\","$line
-    echo "$formatted_line"
+    # Skip the CSV header row
+    echo "$line" | grep -q '^"Package"' && continue
+    [ -z "$line" ] && continue
+    # Prefix with Grype: for Wazuh decoder matching
+    echo "Grype:\"$image\",$line"
   done <<< "$grype_output"
 done
 

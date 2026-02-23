@@ -51,13 +51,10 @@ spec:
                   - -c
                   - |
                     # Install Grype vulnerability scanner
-                    #curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /var/ossec/custom-script
                     curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
-                    # Update Grype DB at build time (runtime update also happens via script)
-                    RUN grype db update
-                    
                     # Copy the Grype scan script from the ConfigMap
+                    mkdir -p /var/ossec/custom-script
                     cp /grype-config/grype_scan.sh /var/ossec/custom-script/grype_scan.sh
                     chmod +x /var/ossec/custom-script/grype_scan.sh
 
