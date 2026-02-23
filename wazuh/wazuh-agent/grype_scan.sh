@@ -4,6 +4,7 @@
 # Adapted for Kubernetes nodes - supports Docker, containerd, and CRI-O runtimes.
 
 GRYPE_BIN=$(command -v grype 2>/dev/null || echo "/usr/local/bin/grype")
+CRICTL_BIN=$(command -v crictl 2>/dev/null || echo "/usr/local/bin/crictl")
 TEMPLATE_DIR="/tmp"
 TEMPLATE_FILE="$TEMPLATE_DIR/grype-custom.tmpl"
 
@@ -14,7 +15,7 @@ if [ ! -x "$GRYPE_BIN" ]; then
 fi
 
 # Update Grype vulnerability database before scanning
-"$GRYPE_BIN" db update 2>/dev/null
+"$GRYPE_BIN" db update &>/dev/null
 
 # Create the custom output template for Grype
 cat <<'EOL' > "$TEMPLATE_FILE"
@@ -24,11 +25,28 @@ cat <<'EOL' > "$TEMPLATE_FILE"
 {{- end }}
 EOL
 
-# ── Strategy 1: Detect container images via crictl (containerd/CRI-O) ──
+# ── Detect the container runtime endpoint ──
+# crictl needs to know which CRI socket to use. Check common locations.
+RUNTIME_ENDPOINT="${CONTAINER_RUNTIME_ENDPOINT:-}"
+if [ -z "$RUNTIME_ENDPOINT" ]; then
+  if [ -S /run/containerd/containerd.sock ]; then
+    RUNTIME_ENDPOINT="unix:///run/containerd/containerd.sock"
+  elif [ -S /var/run/containerd/containerd.sock ]; then
+    RUNTIME_ENDPOINT="unix:///var/run/containerd/containerd.sock"
+  elif [ -S /run/crio/crio.sock ]; then
+    RUNTIME_ENDPOINT="unix:///run/crio/crio.sock"
+  elif [ -S /var/run/crio/crio.sock ]; then
+    RUNTIME_ENDPOINT="unix:///var/run/crio/crio.sock"
+  elif [ -S /var/run/dockershim.sock ]; then
+    RUNTIME_ENDPOINT="unix:///var/run/dockershim.sock"
+  fi
+fi
+
 images=""
 
-if command -v crictl &>/dev/null; then
-  images=$(crictl images -o json 2>/dev/null | python3 -c "
+# ── Strategy 1: crictl with detected CRI socket (containerd/CRI-O) ──
+if [ -x "$CRICTL_BIN" ] && [ -n "$RUNTIME_ENDPOINT" ]; then
+  images=$("$CRICTL_BIN" --runtime-endpoint "$RUNTIME_ENDPOINT" images -o json 2>/dev/null | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 for img in data.get('images', []):
@@ -37,26 +55,44 @@ for img in data.get('images', []):
             print(tag)
 " 2>/dev/null)
 
-# ── Strategy 2: Docker runtime (socket + CLI available) ──
+# ── Strategy 2: crictl without explicit endpoint (relies on default config) ──
+elif [ -x "$CRICTL_BIN" ]; then
+  images=$("$CRICTL_BIN" images -o json 2>/dev/null | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for img in data.get('images', []):
+    for tag in img.get('repoTags', []):
+        if '<none>' not in tag:
+            print(tag)
+" 2>/dev/null)
+
+# ── Strategy 3: Docker runtime (socket + CLI available) ──
 elif [ -S /var/run/docker.sock ] && command -v docker &>/dev/null; then
   images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>")
 
-# ── Strategy 3: Docker socket exists but no CLI - try host binary via nsenter ──
+# ── Strategy 4: Docker socket exists but no CLI - try host binary via nsenter ──
 elif [ -S /var/run/docker.sock ] && [ -x /host/usr/bin/docker ]; then
   images=$(nsenter --target 1 --mount --uts --ipc --net -- docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>")
 
-# ── Strategy 4: Fallback - nsenter to access host's container runtime ──
+# ── Strategy 5: Fallback - nsenter to access host's container runtime ──
 else
   images=$(nsenter --target 1 --mount --uts --ipc --net -- sh -c '
-    if command -v docker &>/dev/null; then
+    if command -v crictl &>/dev/null; then
+      crictl images -o json 2>/dev/null | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for img in data.get(\"images\", []):
+    for tag in img.get(\"repoTags\", []):
+        if \"<none>\" not in tag:
+            print(tag)
+" 2>/dev/null
+    elif command -v docker &>/dev/null; then
       docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -v "<none>"
-    elif command -v crictl &>/dev/null; then
-      crictl images 2>/dev/null | tail -n +2 | awk "{print \$1\":\"\$2}" | grep -v "<none>"
     fi
   ' 2>/dev/null)
 fi
 
-# ── Strategy 5 (optional): Append ECR registry images for EKS environments ──
+# ── Strategy 6 (optional): Append ECR registry images for EKS environments ──
 # Uncomment and set ECR_IMAGES to scan images directly from an ECR registry:
 # ECR_IMAGES="123456789.dkr.ecr.ap-south-1.amazonaws.com/your-app:latest"
 # images="$images $ECR_IMAGES"
