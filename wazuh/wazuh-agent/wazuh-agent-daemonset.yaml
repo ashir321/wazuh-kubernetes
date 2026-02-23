@@ -12,8 +12,9 @@ spec:
       labels:
         app: wazuh-agent
     spec:
+      hostNetwork: false
       hostPID: true
-      hostNetwork: true
+      hostIPC: false
       dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 30
       tolerations:
@@ -56,7 +57,7 @@ spec:
                     # Update Grype DB at build time (runtime update also happens via script)
                     RUN grype db update
                     
-                    # Copy the Grype scan script from ConfigMap
+                    # Copy the Grype scan script from the ConfigMap
                     cp /grype-config/grype_scan.sh /var/ossec/custom-script/grype_scan.sh
                     chmod +x /var/ossec/custom-script/grype_scan.sh
 
