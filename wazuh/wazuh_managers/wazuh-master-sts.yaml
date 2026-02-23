@@ -49,9 +49,10 @@ spec:
             - sh
             - -c
             - |
-              mkdir -p /var/ossec/etc/decoders /var/ossec/etc/rules
+              mkdir -p /var/ossec/etc/decoders /var/ossec/etc/rules /var/ossec/etc/shared
               cp /grype-config/grype_decoders.xml /var/ossec/etc/decoders/grype_decoders.xml
               cp /grype-config/grype_rules.xml /var/ossec/etc/rules/grype_rules.xml
+              touch /var/ossec/etc/shared/ar.conf
           volumeMounts:
             - name: grype-manager-config
               mountPath: /grype-config
