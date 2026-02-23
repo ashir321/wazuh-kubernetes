@@ -131,9 +131,6 @@ spec:
             - name: sys
               mountPath: /host/sys
               readOnly: true
-            - name: proc
-              mountPath: /host/proc
-              readOnly: true
             - name: etc
               mountPath: /host/etc
               readOnly: true
